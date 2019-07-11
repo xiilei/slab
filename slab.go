@@ -1,22 +1,21 @@
 package slab
 
-// Entry entry
-type Entry struct {
-	Vacant int
-	Val    interface{}
-}
-
 // Slab pre-allocated storage for a uniform data type
 type Slab struct {
-	entries []*Entry
+	entries []*entry
 	next    int
 	len     int
+}
+
+type entry struct {
+	vacant int
+	val    interface{}
 }
 
 // NewSlab creates new Slab list
 func NewSlab(size int) *Slab {
 	slab := &Slab{
-		entries: make([]*Entry, 0, size),
+		entries: make([]*entry, 0, size),
 	}
 	return slab
 }
@@ -47,20 +46,20 @@ func (s *Slab) Insert(val interface{}) int {
 
 func (s *Slab) insertAt(key int, val interface{}) {
 	if key == len(s.entries) {
-		s.entries = append(s.entries, &Entry{Val: val})
+		s.entries = append(s.entries, &entry{val: val})
 		s.next = key + 1
 	} else {
-		entry := s.get(key)
-		if entry != nil && entry.Val != nil {
+		e := s.get(key)
+		if e != nil && e.val != nil {
 			panic("unreachable " + string(key))
 		}
-		s.next = entry.Vacant
-		s.entries[key] = &Entry{Val: val}
+		s.next = e.vacant
+		s.entries[key] = &entry{val: val}
 	}
 	s.len++
 }
 
-func (s *Slab) get(key int) *Entry {
+func (s *Slab) get(key int) *entry {
 	if key >= len(s.entries) || key < 0 {
 		return nil
 	}
@@ -74,21 +73,21 @@ func (s *Slab) Contains(key int) bool {
 
 // Get a val
 func (s *Slab) Get(key int) interface{} {
-	entry := s.get(key)
-	if entry != nil {
-		return entry.Val
+	e := s.get(key)
+	if e != nil {
+		return e.val
 	}
 	return nil
 }
 
 // Remove a val
 func (s *Slab) Remove(key int) {
-	entry := s.get(key)
-	if entry == nil || entry.Val == nil {
+	e := s.get(key)
+	if e == nil || e.val == nil {
 		return
 	}
-	s.entries[key] = &Entry{
-		Vacant: s.next,
+	s.entries[key] = &entry{
+		vacant: s.next,
 	}
 	s.len--
 	s.next = key
