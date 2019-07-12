@@ -1,6 +1,7 @@
 package slab
 
 import (
+	"sync"
 	"testing"
 )
 
@@ -28,4 +29,24 @@ func TestRemove(t *testing.T) {
 	if s.Get(a) != "c" {
 		t.Fatal("invaild new val")
 	}
+}
+
+func TestRace(t *testing.T) {
+	s := NewSlab(2)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	wg.Add(2)
+	go func() {
+		mu.Lock()
+		s.Insert("a")
+		mu.Unlock()
+		wg.Done()
+	}()
+	go func() {
+		mu.Lock()
+		s.Insert("b")
+		mu.Unlock()
+		wg.Done()
+	}()
+	wg.Wait()
 }
