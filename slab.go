@@ -9,7 +9,7 @@ type Slab struct {
 
 type entry struct {
 	vacant int
-	val    interface{}
+	val    interface{} // ?Sized
 }
 
 // NewSlab creates new Slab list
@@ -86,6 +86,7 @@ func (s *Slab) Remove(key int) {
 	if e == nil || e.val == nil {
 		return
 	}
+	s.entries[key].val = nil
 	s.entries[key] = &entry{
 		vacant: s.next,
 	}
