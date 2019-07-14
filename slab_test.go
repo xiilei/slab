@@ -31,6 +31,20 @@ func TestRemove(t *testing.T) {
 	}
 }
 
+type st struct {
+	a string
+}
+
+func TestPointer(t *testing.T) {
+	s := NewSlab(2)
+	vi := &st{a: "ok"}
+	a := s.Insert(vi)
+	v := s.Get(a).(*st)
+	if v.a != "ok" {
+		t.Fatal("invaild pointer val")
+	}
+}
+
 func TestRace(t *testing.T) {
 	s := NewSlab(2)
 	var wg sync.WaitGroup

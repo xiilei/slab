@@ -1,6 +1,9 @@
 package slab
 
+import "unsafe"
+
 // Slab pre-allocated storage for a uniform data type
+// Slab are not safe for concurrentry
 type Slab struct {
 	entries []*entry
 	next    int
@@ -9,7 +12,7 @@ type Slab struct {
 
 type entry struct {
 	vacant int
-	val    interface{} // ?Sized
+	val    unsafe.Pointer // Sized
 }
 
 // NewSlab creates new Slab list
@@ -45,8 +48,9 @@ func (s *Slab) Insert(val interface{}) int {
 }
 
 func (s *Slab) insertAt(key int, val interface{}) {
+	v := unsafe.Pointer(&val)
 	if key == len(s.entries) {
-		s.entries = append(s.entries, &entry{val: val})
+		s.entries = append(s.entries, &entry{val: v})
 		s.next = key + 1
 	} else {
 		e := s.get(key)
@@ -54,7 +58,7 @@ func (s *Slab) insertAt(key int, val interface{}) {
 			panic("unreachable " + string(key))
 		}
 		s.next = e.vacant
-		s.entries[key] = &entry{val: val}
+		s.entries[key] = &entry{val: v}
 	}
 	s.len++
 }
@@ -75,7 +79,7 @@ func (s *Slab) Contains(key int) bool {
 func (s *Slab) Get(key int) interface{} {
 	e := s.get(key)
 	if e != nil {
-		return e.val
+		return *(*interface{})(e.val)
 	}
 	return nil
 }
